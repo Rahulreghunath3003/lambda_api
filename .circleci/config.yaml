@@ -1,0 +1,51 @@
+version: 2.1
+
+executors:
+  default:
+    docker:
+      - image: circleci/python:3.8  # You can choose an appropriate image for your environment
+
+jobs:
+  build:
+    executor: default
+    steps:
+      - checkout  # Checkout your code
+      
+      - run:
+          name: Generate Nomad Job File
+          command: |
+            echo 'job "example" {
+              datacenters = ["dc1"]
+              type = "batch"
+
+              group "example" {
+                task "example" {
+                  driver = "raw_exec"
+
+                  config {
+                    command = "echo"
+                    args = ["Hello, Nomad!"]
+                  }
+                }
+              }
+            }' > file.hcl  # Create the Nomad job file
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - file.hcl  # Store the job file as an artifact
+
+      - run:
+          name: Upload Artifact to CircleCI
+          command: |
+            echo "This step is just to show you how to upload an artifact, no actual upload is done here."
+            
+      - store_artifacts:
+          path: file.hcl  # Store the file.hcl as an artifact for future jobs
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build
+
